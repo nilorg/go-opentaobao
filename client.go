@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +17,8 @@ import (
 	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
+	"github.com/nilorg/go-opentaobao/cache"
+	"github.com/nilorg/sdk/convert"
 )
 
 var (
@@ -24,19 +27,21 @@ var (
 	// AppSecret 秘密
 	AppSecret string
 	// Router 环境请求地址
-	Router string
+	Router = "http://gw.api.taobao.com/router/rest"
+	// Session 用户登录授权成功后，TOP颁发给应用的授权信息。当此API的标签上注明：“需要授权”，则此参数必传；“不需要授权”，则此参数不需要传；“可选授权”，则此参数为可选
+	Session string
 	// Timeout ...
 	Timeout time.Duration
 	// CacheExpiration 缓存过期时间
 	CacheExpiration = time.Hour
 	// GetCache 获取缓存
-	GetCache GetCacheFunc
+	GetCache cache.GetCacheFunc
 	// SetCache 设置缓存
-	SetCache SetCacheFunc
+	SetCache cache.SetCacheFunc
 )
 
 // Parameter 参数
-type Parameter map[string]string
+type Parameter map[string]interface{}
 
 // copyParameter 复制参数
 func copyParameter(srcParams Parameter) Parameter {
@@ -63,7 +68,9 @@ func newCacheKey(params Parameter) string {
 	// 把所有参数名和参数值串在一起
 	cacheKeyBuf := new(bytes.Buffer)
 	for _, k := range keys {
-		cacheKeyBuf.WriteString(k + "=" + cpParams[k])
+		cacheKeyBuf.WriteString(k)
+		cacheKeyBuf.WriteString("=")
+		cacheKeyBuf.WriteString(interfaceToString(cpParams[k]))
 	}
 	h := md5.New()
 	io.Copy(h, cacheKeyBuf)
@@ -137,11 +144,14 @@ func ExecuteCache(method string, param Parameter) (res *simplejson.Json, err err
 	param.setRequestData()
 
 	cacheKey := newCacheKey(param)
-	cacheBytes := GetCache(cacheKey)
-	if len(cacheBytes) > 0 {
-		res, err = simplejson.NewJson(cacheBytes)
-		if err == nil && res != nil {
-			return
+	// 获取缓存
+	if GetCache != nil {
+		cacheBytes := GetCache(cacheKey)
+		if len(cacheBytes) > 0 {
+			res, err = simplejson.NewJson(cacheBytes)
+			if err == nil && res != nil {
+				return
+			}
 		}
 	}
 
@@ -155,7 +165,10 @@ func ExecuteCache(method string, param Parameter) (res *simplejson.Json, err err
 		return
 	}
 	ejsonBody, _ := res.MarshalJSON()
-	go SetCache(cacheKey, ejsonBody, CacheExpiration)
+	// 设置缓存
+	if SetCache != nil {
+		go SetCache(cacheKey, ejsonBody, CacheExpiration)
+	}
 	return
 }
 
@@ -170,12 +183,6 @@ func checkConfig() error {
 	if Router == "" {
 		return errors.New("Router 不能为空")
 	}
-	if GetCache == nil {
-		return errors.New("GetCache 不能为空")
-	}
-	if SetCache == nil {
-		return errors.New("SetCache 不能为空")
-	}
 	return nil
 }
 
@@ -187,7 +194,10 @@ func (p Parameter) setRequestData() {
 	p["app_key"] = AppKey
 	p["v"] = "2.0"
 	p["sign_method"] = "md5"
-	p["partner_id"] = "Keng"
+	p["partner_id"] = "Nilorg"
+	if Session != "" {
+		p["session"] = Session
+	}
 	// 设置签名
 	p["sign"] = getSign(p)
 }
@@ -198,7 +208,7 @@ func (p Parameter) getRequestData() string {
 	args := url.Values{}
 	// 请求参数
 	for key, val := range p {
-		args.Set(key, val)
+		args.Set(key, interfaceToString(val))
 	}
 	return args.Encode()
 }
@@ -213,13 +223,34 @@ func getSign(params Parameter) string {
 	// 排序asc
 	sort.Strings(keys)
 	// 把所有参数名和参数值串在一起
-	query := AppSecret
+	query := bytes.NewBufferString(AppSecret)
 	for _, k := range keys {
-		query += k + params[k]
+		query.WriteString(k)
+		query.WriteString(interfaceToString(params[k]))
 	}
-	query += AppSecret
+	query.WriteString(AppSecret)
 	// 使用MD5加密
-	signBytes := md5.Sum([]byte(query))
+	h := md5.New()
+	io.Copy(h, query)
 	// 把二进制转化为大写的十六进制
-	return strings.ToUpper(hex.EncodeToString(signBytes[:]))
+	return strings.ToUpper(hex.EncodeToString(h.Sum(nil)))
+}
+
+func interfaceToString(src interface{}) string {
+	if src == nil {
+		panic(ErrTypeIsNil)
+	}
+	switch src.(type) {
+	case string:
+		return src.(string)
+	case int, int8, int32, int64:
+	case uint8, uint16, uint32, uint64:
+	case float32, float64:
+		return convert.ToString(src)
+	}
+	data, err := json.Marshal(src)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }
