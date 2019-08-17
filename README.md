@@ -1,9 +1,11 @@
 # taobaogo
 淘宝Api、淘宝开放平台Api请求基础SDK
 
-# 淘宝API sign算法
+# 淘宝API
 
 [sign算法](http://open.taobao.com/doc.htm?docId=101617&docType=1)
+
+[淘宝Session](https://oauth.taobao.com/authorize?response_type=token&client_id=24840730)
 
 # Example 🌰
 ```go
