@@ -57,25 +57,7 @@ var (
 	Redis *redis.Client
 )
 
-func initTaobaoCache() {
-	opentaobao.GetCache = func(cacheKey string) []byte {
-		bytes, err := Redis.Get(cacheKey).Bytes()
-		if err == redis.Nil {
-			return nil
-		} else if err != nil {
-			logger.Errorln(err)
-			return nil
-		}
-		return bytes
-	}
-
-	opentaobao.SetCache = func(key string, value []byte, expiration time.Duration) bool {
-		err := Redis.SetNX(key, value, expiration).Err()
-		if err != nil {
-			logger.Errorln(err)
-			return false
-		}
-		return true
-	}
+func init() {
+	opentaobao.SetRedis(Redis)
 }
 ```
