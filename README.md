@@ -47,3 +47,35 @@ func main() {
 }
 
 ```
+## 使用Redis作为缓存
+```go
+
+import "github.com/go-redis/redis/v7"
+
+var (
+	// Redis 缓存
+	Redis *redis.Client
+)
+
+func initTaobaoCache() {
+	opentaobao.GetCache = func(cacheKey string) []byte {
+		bytes, err := Redis.Get(cacheKey).Bytes()
+		if err == redis.Nil {
+			return nil
+		} else if err != nil {
+			logger.Errorln(err)
+			return nil
+		}
+		return bytes
+	}
+
+	opentaobao.SetCache = func(key string, value []byte, expiration time.Duration) bool {
+		err := Redis.SetNX(key, value, expiration).Err()
+		if err != nil {
+			logger.Errorln(err)
+			return false
+		}
+		return true
+	}
+}
+```
