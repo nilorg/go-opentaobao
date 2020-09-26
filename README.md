@@ -50,7 +50,7 @@ func main() {
 ## 使用Redis作为缓存
 ```go
 
-import "github.com/go-redis/redis/v7"
+import "github.com/go-redis/redis/v8"
 
 var (
 	// Redis 缓存
