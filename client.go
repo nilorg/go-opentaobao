@@ -97,12 +97,12 @@ func execute(param Parameter) (bytes []byte, err error) {
 	if err != nil {
 		return
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
 		err = fmt.Errorf("请求错误:%d", response.StatusCode)
 		return
 	}
-	defer response.Body.Close()
 	bytes, err = ioutil.ReadAll(response.Body)
 	return
 }
