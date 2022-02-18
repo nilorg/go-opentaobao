@@ -175,13 +175,13 @@ func ExecuteCache(method string, param Parameter) (res *simplejson.Json, err err
 // 检查配置
 func checkConfig() error {
 	if AppKey == "" {
-		return errors.New("AppKey 不能为空")
+		return errors.New("AppKey不能为空")
 	}
 	if AppSecret == "" {
-		return errors.New("AppSecret 不能为空")
+		return errors.New("AppSecret不能为空")
 	}
 	if Router == "" {
-		return errors.New("Router 不能为空")
+		return errors.New("Router不能为空")
 	}
 	return nil
 }
@@ -240,13 +240,11 @@ func interfaceToString(src interface{}) string {
 	if src == nil {
 		panic(ErrTypeIsNil)
 	}
-	switch src.(type) {
+	switch v := src.(type) {
 	case string:
-		return src.(string)
-	case int, int8, int32, int64:
-	case uint8, uint16, uint32, uint64:
-	case float32, float64:
-		return convert.ToString(src)
+		return v
+	case uint8, uint16, uint32, uint64, int, int8, int32, int64, float32, float64:
+		return convert.ToString(v)
 	}
 	data, err := json.Marshal(src)
 	if err != nil {
