@@ -22,16 +22,11 @@ func init() {
 }
 
 func main() {
-
-	result, err := opentaobao.Execute("taobao.tbk.relation.refund", opentaobao.Parameter{
-		"search_option": map[string]interface{}{
-			"page_size":   1,
-			"search_type": 4, // 1-维权发起时间，2-订单结算时间（正向订单），3-维权完成时间，4-订单创建时间
-			"refund_type": 1, // 1 表示2方，2表示3方
-			"start_time":  "2019-07-08 00:00:00",
-			"page_no":     1,
-			"biz_type":    1,
-		},
+	// taobao.tbk.dg.material.optional
+	result, err := opentaobao.Execute("taobao.tbk.dg.material.optional", opentaobao.Parameter{
+		"q":         "鸿星尔克男鞋板鞋2022新款白色厚底休闲鞋子潮时尚男运动鞋滑板鞋",
+		"adzone_id": "466816091",
+		"platform":  "2",
 	})
 
 	// result, err := opentaobao.Execute("taobao.tbk.order.details.get", opentaobao.Parameter{

@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -187,9 +186,7 @@ func checkConfig() error {
 }
 
 func (p Parameter) setRequestData() {
-	hh, _ := time.ParseDuration("8h")
-	loc := time.Now().UTC().Add(hh)
-	p["timestamp"] = strconv.FormatInt(loc.Unix(), 10)
+	p["timestamp"] = time.Now().Format("2006-01-02 15:04:05")
 	p["format"] = "json"
 	p["app_key"] = AppKey
 	p["v"] = "2.0"
