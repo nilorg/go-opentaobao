@@ -1,13 +1,13 @@
-module github.com/nilorg/go-opentaobao
+module github.com/nilorg/go-opentaobao/v2
 
-go 1.13
+go 1.20
 
 require (
-	github.com/bitly/go-simplejson v0.5.0
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/go-redis/redis/v8 v8.2.2
-	github.com/kr/pretty v0.1.0 // indirect
-	github.com/nilorg/sdk v0.0.0-20200912025101-a4037e6ee224
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	github.com/nilorg/sdk v0.0.0-20230418035736-8bd62607dfd8
+	github.com/tidwall/gjson v1.14.4
+)
+
+require (
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 )

@@ -12,52 +12,31 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
+	"os"
 
-	 "github.com/nilorg/go-opentaobao"
+	"github.com/nilorg/go-opentaobao/v2"
 )
 
-func init() {
-	opentaobao.AppKey = ""
-	opentaobao.AppSecret = ""
-	opentaobao.Router = "http://gw.api.taobao.com/router/rest"
-}
-
 func main() {
-	res, err := opentaobao.Execute("taobao.tbk.item.get", opentaobao.Parameter{
-		"fields": "num_iid,title,pict_url,small_images,reserve_price,zk_final_price,user_type,provcity,item_url,seller_id,volume,nick",
-		"q":      "女装",
-		"cat":    "16,18",
+	client := opentaobao.NewClient(
+		opentaobao.WithAppKey(os.Getenv("APP_KEY")),
+		opentaobao.WithAppSecret(os.Getenv("APP_SECRET")),
+	)
+	ctx := context.Background()
+	// EXP: 使用session
+	// ctx = opentaobao.NewSessionContext(ctx, "session")
+	result, err := client.Execute(ctx, "taobao.tbk.dg.material.optional", opentaobao.Parameter{
+		"q":         "鸿星尔克男鞋板鞋",
+		"adzone_id": os.Getenv("ADZONE_ID"),
+		"platform":  "2",
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("execute error:%s\n", err)
+		return
 	}
-
-	fmt.Println("商品数量:", res.Get("tbk_item_get_response").Get("total_results").MustInt())
-	var imtes []interface{}
-	imtes, _ = res.Get("tbk_item_get_response").Get("results").Get("n_tbk_item").Array()
-	for _, v := range imtes {
-		fmt.Println("======")
-		item := v.(map[string]interface{})
-		fmt.Println("商品名称:", item["title"])
-		fmt.Println("商品价格:", item["reserve_price"])
-		fmt.Println("商品链接:", item["item_url"])
-	}
-}
-
-```
-## 使用Redis作为缓存
-```go
-
-import "github.com/go-redis/redis/v8"
-
-var (
-	// Redis 缓存
-	Redis *redis.Client
-)
-
-func init() {
-	opentaobao.SetRedis(Redis)
+	log.Printf("result:%s\n", result.String())
 }
 ```
